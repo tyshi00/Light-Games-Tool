@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewModelScope
+import com.thelightphone.games.brickbreaker.BrickBreakerScreen
 import com.thelightphone.games.snake.SnakeScreen
 import com.thelightphone.games.sudoku.SudokuScreen
 import com.thelightphone.games.wordsearch.WordSearchScreen
@@ -43,6 +44,7 @@ class HomeScreenViewModel(
 
     data class UiState(
         val snakeRemainingSeconds: Int = DailyPlaytimeStore.DEFAULT_DAILY_SECONDS,
+        val brickBreakerRemainingSeconds: Int = DailyPlaytimeStore.DEFAULT_DAILY_SECONDS,
         val sudokuRemaining: Int = DailyLimitStore.DEFAULT_DAILY_LIMIT,
         val wordSearchRemaining: Int = DailyLimitStore.DEFAULT_DAILY_LIMIT,
     )
@@ -77,6 +79,7 @@ class HomeScreenViewModel(
         viewModelScope.launch {
             _state.value = UiState(
                 snakeRemainingSeconds = dailyPlaytimeStore.remainingSeconds(GameKeys.SNAKE),
+                brickBreakerRemainingSeconds = dailyPlaytimeStore.remainingSeconds(GameKeys.BRICK_BREAKER),
                 sudokuRemaining = dailyLimitStore.remainingPlays(GameKeys.SUDOKU),
                 wordSearchRemaining = dailyLimitStore.remainingPlays(GameKeys.WORD_SEARCH),
             )
@@ -122,6 +125,12 @@ class HomeScreen(sealedActivity: SealedLightActivity) :
                             subtitle = describeRemainingTime(state.snakeRemainingSeconds),
                             enabled = state.snakeRemainingSeconds > 0,
                             onClick = { navigateTo(screenFactory = { activity -> SnakeScreen(activity) }) },
+                        )
+                        GameMenuRow(
+                            title = "Brick Breaker",
+                            subtitle = describeRemainingTime(state.brickBreakerRemainingSeconds),
+                            enabled = state.brickBreakerRemainingSeconds > 0,
+                            onClick = { navigateTo(screenFactory = { activity -> BrickBreakerScreen(activity) }) },
                         )
                         GameMenuRow(
                             title = "Sudoku",

@@ -1,10 +1,11 @@
 # Games (Light Phone III)
 
-A small games tool for LightOS, built with the Light SDK. Three games: Snake, Sudoku, and Word Search.
+A small games tool for LightOS, built with the Light SDK. Four games: Snake, Brick Breaker, Sudoku, and Word Search.
 
 <p align="center">
   <img src="screenshots/home.png" width="180" alt="">
   <img src="screenshots/snake.png" width="180" alt="">
+  <img src="screenshots/brick-breaker.png" width="180" alt="">
   <img src="screenshots/sudoku.png" width="180" alt="">
   <img src="screenshots/word-search.png" width="180" alt="">
 </p>
@@ -12,6 +13,7 @@ A small games tool for LightOS, built with the Light SDK. Three games: Snake, Su
 ## What's in it
 
 - **Snake** - swipe to steer. No per-attempt limit, but capped at 20 minutes of playtime per day.
+- **Brick Breaker** - tap the left or right half of the screen to nudge the paddle; each tap moves it a fixed distance rather than gliding, for precise control. Shares Snake's 20-minute daily time budget rather than a per-attempt limit, same reasoning: quick rounds, unlimited retries within the budget.
 - **Sudoku** - 3 puzzles a day. If you back out mid-puzzle, it resumes right where you left off instead of starting over or costing you another attempt.
 - **Word Search** - same daily limit and resume behavior as Sudoku.
 - **Settings** - one option right now: invert colors (dark/light).

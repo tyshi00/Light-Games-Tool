@@ -1,8 +1,8 @@
 [tool]
-id          = "com.tyshi00.games"      # change to your own reverse-domain id before submitting
+id          = "com.tyshi00.games"
 label       = "Games"
-versionCode = 1
-versionName = "0.1.0"
+versionCode = 2
+versionName = "0.2.0"
 permissions = []                              # everything runs fully on-device, no permissions needed
 # change if you run this on an LP3!
 # serverPackage = "com.lightos"
