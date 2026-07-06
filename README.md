@@ -51,7 +51,6 @@ This repo patches a few things in the local `sdk`/`plugin` copies, on top of the
 
 - **Custom app icon is wired up.** The stock SDK's manifest generator doesn't reference a launcher icon at all by default; this repo's local `plugin` copy was patched to add `android:icon`/`android:roundIcon`, and the icon itself (an adaptive icon with a Public Sans "G") lives in `tool/src/main/res/`.
 - **Splash screen shows only as long as needed.** The SDK's default `LightActivity` enforces a hard ~1 second minimum splash duration; that check was removed from this repo's local `sdk:client` copy, so the splash now shows for exactly as long as it takes content to be ready, nothing more. The splash itself is just a plain black screen with no icon.
-- **The SDK's keyboard component was removed.** Light's `sdk:ui` module normally depends on a private `com.thelightphone.lp3keyboard:ui` package (hosted on GitHub Packages, requiring authenticated access) for its in-app text-input keyboard (`LightTextInputEditor`, `LightEmbeddedLp3Keyboard`, `LightKeyboardManager`). None of Games' screens use text input at all, so those files were deleted from this repo's local `sdk` copy and the dependency removed entirely - this means the project builds without needing any GitHub Packages credentials. Two of Light's own example apps (`examples/ui-demo`, `examples/weather`) still reference the removed keyboard editor and would fail to compile if built individually, but they're unrelated to the Games tool and aren't part of any build or CI step here.
 
 ## Releasing a new version
 
