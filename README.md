@@ -2,6 +2,13 @@
 
 A small games tool for LightOS, built with the Light SDK. Three games: Snake, Sudoku, and Word Search.
 
+<p align="center">
+  <img src="screenshots/home.png" width="180" alt="">
+  <img src="screenshots/snake.png" width="180" alt="">
+  <img src="screenshots/sudoku.png" width="180" alt="">
+  <img src="screenshots/word-search.png" width="180" alt="">
+</p>
+
 ## What's in it
 
 - **Snake** - swipe to steer. No per-attempt limit, but capped at 20 minutes of playtime per day.
