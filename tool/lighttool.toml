@@ -1,0 +1,9 @@
+[tool]
+id          = "com.example.lightgames"       # change to your own reverse-domain id before submitting
+label       = "Games"
+versionCode = 1
+versionName = "0.1.0"
+permissions = []                              # everything runs fully on-device, no permissions needed
+# change if you run this on an LP3!
+# serverPackage = "com.lightos"
+serverPackage = "com.thelightphone.sdk.emulator"

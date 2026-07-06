@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Capital "G" traced from the actual Public Sans Bold glyph outline (SIL Open
+    Font License, https://github.com/uswds/public-sans), not an approximated
+    shape - extracted and transformed with fontTools so this is the real
+    letterform, scaled/centered to fit within the adaptive icon's 66dp "safe
+    zone" so it isn't clipped by circular/rounded-square/squircle masks.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M54.45 78.00Q48.02 78.00 43.31 75.08Q38.59 72.15 36.01 66.79Q33.42 61.43 33.42 54.13Q33.42 46.70 36.12 41.29Q38.82 35.88 43.66 32.94Q48.51 30.00 54.97 30.00Q59.14 30.00 62.58 31.34Q66.02 32.68 68.54 34.96Q71.06 37.24 72.49 40.13Q73.93 43.02 74.06 46.12H64.11Q63.46 42.79 61.03 40.38Q58.59 37.98 54.74 37.98Q51.61 37.98 49.11 39.58Q46.60 41.18 45.15 44.66Q43.70 48.15 43.70 53.87Q43.70 60.04 45.34 63.48Q46.99 66.92 49.61 68.31Q52.22 69.70 55.13 69.70Q57.91 69.70 59.88 68.54Q61.85 67.37 62.96 65.64Q64.08 63.92 64.34 62.24L64.69 59.39H55.03V52.87L74.58 52.97V77.35H68.15V71.25Q66.92 72.83 65.18 74.40Q63.43 75.97 60.83 76.98Q58.23 78.00 54.45 78.00Z" />
+</vector>
