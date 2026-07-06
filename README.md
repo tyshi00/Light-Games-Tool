@@ -24,34 +24,36 @@ Only needed if you want to modify the code yourself.
 Requirements:
 - Android Studio
 - Android SDK with the API 34/36 platform installed
-- A GitHub personal access token with `read:packages` scope (the SDK pulls its keyboard component from GitHub Packages, so Gradle needs this to sync)
 
 Steps:
 1. Clone this repo.
 2. Create a `local.properties` file in the repo root with:
    ```
    sdk.dir=/path/to/your/Android/Sdk
-   gpr.user=your_github_username
-   gpr.key=your_github_token
    ```
 3. Open the repo root in Android Studio and let Gradle sync.
 4. Pick the `tool` run configuration, target an emulator or a Light Phone III in developer mode, and run.
 
 For emulator testing, an AVD around 1080x1240 (API 34, no Google Play Services) is closest to the real device's screen. See `docs/system_app` in this repo if you want to run the actual LightOS emulator shell instead of a plain Android emulator.
 
-## Known limitations
+## Deviations from the stock SDK
 
-- **No custom app icon yet.** This version of the SDK doesn't expose a way to set a launcher icon - the generated manifest never references one, and there's no `icon` field in `lighttool.toml`. The icon artwork is already built and sitting in `tool/src/main/res/` (adaptive icon + a Public Sans "G"), ready to wire up the moment icon support exists.
-- **Splash screen has a hard ~1 second minimum.** That's enforced in the SDK's own `LightActivity`, not something a tool can override. The splash itself is just a plain black screen with nothing on it.
+This repo patches a few things in the local `sdk`/`plugin` copies, on top of the actual game code:
+
+- **Custom app icon is wired up.** The stock SDK's manifest generator doesn't reference a launcher icon at all by default; this repo's local `plugin` copy was patched to add `android:icon`/`android:roundIcon`, and the icon itself (an adaptive icon with a Public Sans "G") lives in `tool/src/main/res/`.
+- **Splash screen shows only as long as needed.** The SDK's default `LightActivity` enforces a hard ~1 second minimum splash duration; that check was removed from this repo's local `sdk:client` copy, so the splash now shows for exactly as long as it takes content to be ready, nothing more. The splash itself is just a plain black screen with no icon.
+- **The SDK's keyboard component was removed.** Light's `sdk:ui` module normally depends on a private `com.thelightphone.lp3keyboard:ui` package (hosted on GitHub Packages, requiring authenticated access) for its in-app text-input keyboard (`LightTextInputEditor`, `LightEmbeddedLp3Keyboard`, `LightKeyboardManager`). None of Games' screens use text input at all, so those files were deleted from this repo's local `sdk` copy and the dependency removed entirely - this means the project builds without needing any GitHub Packages credentials. Two of Light's own example apps (`examples/ui-demo`, `examples/weather`) still reference the removed keyboard editor and would fail to compile if built individually, but they're unrelated to the Games tool and aren't part of any build or CI step here.
 
 ## Releasing a new version
 
-1. Bump `versionCode` and `versionName` in `tool/lighttool.toml`, commit. `versionCode` has to strictly increase each release, or Android won't recognize it as an update.
-2. Tag the commit and push the tag:
-   ```
-   git tag v1.1.0
-   git push origin v1.1.0
-   ```
-3. `.github/workflows/release.yml` builds the APK and publishes it as a GitHub Release with the APK attached automatically.
+Just push to `main` - `.github/workflows/release.yml` builds the APK on every push and publishes it as a rolling `latest` GitHub Release with the APK attached, replacing the previous build:
 
-The only repo secrets this needs are `GH_PACKAGES_USER` and `GH_PACKAGES_TOKEN` (same GitHub Packages credentials used locally) - both are already required just to build the project at all, so there's nothing extra to set up.
+```
+git add .
+git commit -m "Your changes"
+git push
+```
+
+The workflow needs no repo secrets at all - it uses GitHub Actions' automatically-provided token, and doesn't depend on any external private packages.
+
+If you'd rather version releases explicitly instead of always overwriting `latest`, bump `versionCode`/`versionName` in `tool/lighttool.toml` before pushing, and consider switching the workflow to trigger on version tags instead of every push to `main`.

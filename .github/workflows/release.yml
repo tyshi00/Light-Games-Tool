@@ -12,12 +12,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      GITHUB_ACTOR: ${{ github.actor }}
-      GITHUB_TOKEN: ${{ secrets.GPR_TOKEN }}
-      GH_PACKAGES_USER: ${{ github.actor }}
-      GH_PACKAGES_TOKEN: ${{ secrets.GPR_TOKEN }}
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
