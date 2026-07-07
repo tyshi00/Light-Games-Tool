@@ -15,6 +15,7 @@ import androidx.lifecycle.viewModelScope
 import com.thelightphone.sdk.LightScreen
 import com.thelightphone.sdk.LightViewModel
 import com.thelightphone.sdk.SealedLightActivity
+import com.thelightphone.sdk.SimpleLightScreen
 import com.thelightphone.sdk.ui.LightBarButton
 import com.thelightphone.sdk.ui.LightIcon
 import com.thelightphone.sdk.ui.LightIcons
@@ -28,16 +29,44 @@ import com.thelightphone.sdk.ui.LightTopBar
 import com.thelightphone.sdk.ui.LightTopBarCenter
 import com.thelightphone.sdk.ui.gridUnitsAsDp
 import com.thelightphone.sdk.ui.lightClickable
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+
+private val ALL_GAME_KEYS = listOf(
+    GameKeys.SNAKE,
+    GameKeys.BRICK_BREAKER,
+    GameKeys.SUDOKU,
+    GameKeys.WORD_SEARCH,
+)
 
 class SettingsScreenViewModel(
     private val settingsStore: SettingsStore,
+    private val gameVisibilityStore: GameVisibilityStore,
 ) : LightViewModel<Unit>() {
+
+    private val _gameVisibility = MutableStateFlow<Map<String, Boolean>>(emptyMap())
+    val gameVisibility: StateFlow<Map<String, Boolean>> = _gameVisibility
+
+    override fun onScreenShow(screen: SimpleLightScreen<Unit>) {
+        super.onScreenShow(screen)
+        viewModelScope.launch {
+            _gameVisibility.value = ALL_GAME_KEYS.associateWith { gameVisibilityStore.isVisible(it) }
+        }
+    }
 
     fun toggleInvertColors() {
         LightThemeController.toggle()
         viewModelScope.launch {
             settingsStore.setColorInverted(!LightThemeController.isDarkTheme)
+        }
+    }
+
+    fun toggleGameVisibility(gameKey: String) {
+        viewModelScope.launch {
+            val newValue = !(_gameVisibility.value[gameKey] ?: true)
+            gameVisibilityStore.setVisible(gameKey, newValue)
+            _gameVisibility.value = _gameVisibility.value + (gameKey to newValue)
         }
     }
 }
@@ -49,12 +78,16 @@ class SettingsScreen(sealedActivity: SealedLightActivity) :
         get() = SettingsScreenViewModel::class.java
 
     override fun createViewModel(): SettingsScreenViewModel =
-        SettingsScreenViewModel(SettingsStore(lightContext.dataStore))
+        SettingsScreenViewModel(
+            settingsStore = SettingsStore(lightContext.dataStore),
+            gameVisibilityStore = GameVisibilityStore(lightContext.dataStore),
+        )
 
     @Composable
     override fun Content() {
         val themeColors by LightThemeController.colors.collectAsState()
         val isInverted = themeColors != LightThemeColors.Dark
+        val gameVisibility by viewModel.gameVisibility.collectAsState()
 
         LightTheme(colors = themeColors) {
             Column(
@@ -71,6 +104,37 @@ class SettingsScreen(sealedActivity: SealedLightActivity) :
                     title = "Invert Colors",
                     isOn = isInverted,
                     onClick = { viewModel.toggleInvertColors() },
+                )
+
+                LightText(
+                    text = "Show on home screen",
+                    variant = LightTextVariant.Detail,
+                    lighten = true,
+                    modifier = Modifier.padding(
+                        horizontal = 2f.gridUnitsAsDp(),
+                        vertical = 0.75f.gridUnitsAsDp(),
+                    ),
+                )
+
+                SettingsRow(
+                    title = "Snake",
+                    isOn = gameVisibility[GameKeys.SNAKE] ?: true,
+                    onClick = { viewModel.toggleGameVisibility(GameKeys.SNAKE) },
+                )
+                SettingsRow(
+                    title = "Brick Breaker",
+                    isOn = gameVisibility[GameKeys.BRICK_BREAKER] ?: true,
+                    onClick = { viewModel.toggleGameVisibility(GameKeys.BRICK_BREAKER) },
+                )
+                SettingsRow(
+                    title = "Sudoku",
+                    isOn = gameVisibility[GameKeys.SUDOKU] ?: true,
+                    onClick = { viewModel.toggleGameVisibility(GameKeys.SUDOKU) },
+                )
+                SettingsRow(
+                    title = "Word Search",
+                    isOn = gameVisibility[GameKeys.WORD_SEARCH] ?: true,
+                    onClick = { viewModel.toggleGameVisibility(GameKeys.WORD_SEARCH) },
                 )
             }
         }

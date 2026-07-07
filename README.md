@@ -1,6 +1,6 @@
-# Games (Light Phone III)
+# Passatempo (Light Phone III)
 
-A small games tool for LightOS, built with the Light SDK. Four games: Snake, Brick Breaker, Sudoku, and Word Search.
+A small games tool for LightOS, built with the Light SDK. Four games: Snake, Brick Breaker, Sudoku, and Word Search. Formerly called "Games" - renamed to Passatempo (Portuguese/Italian for "pastime").
 
 <p align="center">
   <img src="screenshots/home.png" width="180" alt="">
@@ -16,7 +16,7 @@ A small games tool for LightOS, built with the Light SDK. Four games: Snake, Bri
 - **Brick Breaker** - tap the left or right half of the screen to nudge the paddle; each tap moves it a fixed distance rather than gliding, for precise control. Shares Snake's 20-minute daily time budget rather than a per-attempt limit, same reasoning: quick rounds, unlimited retries within the budget.
 - **Sudoku** - 3 puzzles a day. If you back out mid-puzzle, it resumes right where you left off instead of starting over or costing you another attempt.
 - **Word Search** - same daily limit and resume behavior as Sudoku.
-- **Settings** - one option right now: invert colors (dark/light).
+- **Settings** - invert colors (dark/light), and a show/hide toggle for each game on the home screen.
 
 All progress and daily limits are stored locally on-device. Nothing leaves the phone.
 
@@ -49,8 +49,9 @@ For emulator testing, an AVD around 1080x1240 (API 34, no Google Play Services) 
 
 This repo patches a few things in the local `sdk`/`plugin` copies, on top of the actual game code:
 
-- **Custom app icon is wired up.** The stock SDK's manifest generator doesn't reference a launcher icon at all by default; this repo's local `plugin` copy was patched to add `android:icon`/`android:roundIcon`, and the icon itself (an adaptive icon with a Public Sans "G") lives in `tool/src/main/res/`.
+- **Custom app icon is wired up.** The stock SDK's manifest generator doesn't reference a launcher icon at all by default; this repo's local `plugin` copy was patched to add `android:icon`/`android:roundIcon`. The icon itself is an original, simplified game-controller silhouette with a clock face standing in for the action buttons (nodding to "pastime"), living in `tool/src/main/res/`.
 - **Splash screen shows only as long as needed.** The SDK's default `LightActivity` enforces a hard ~1 second minimum splash duration; that check was removed from this repo's local `sdk:client` copy, so the splash now shows for exactly as long as it takes content to be ready, nothing more. The splash itself is just a plain black screen with no icon.
+- **The SDK's keyboard component was removed.** Light's `sdk:ui` module normally depends on a private `com.thelightphone.lp3keyboard:ui` package (hosted on GitHub Packages, requiring authenticated access) for its in-app text-input keyboard (`LightTextInputEditor`, `LightEmbeddedLp3Keyboard`, `LightKeyboardManager`). None of Games' screens use text input at all, so those files were deleted from this repo's local `sdk` copy and the dependency removed entirely - this means the project builds without needing any GitHub Packages credentials. Two of Light's own example apps (`examples/ui-demo`, `examples/weather`) still reference the removed keyboard editor and would fail to compile if built individually, but they're unrelated to the Games tool and aren't part of any build or CI step here.
 
 ## Releasing a new version
 

@@ -40,6 +40,7 @@ class HomeScreenViewModel(
     private val dailyLimitStore: DailyLimitStore,
     private val dailyPlaytimeStore: DailyPlaytimeStore,
     private val settingsStore: SettingsStore,
+    private val gameVisibilityStore: GameVisibilityStore,
 ) : LightViewModel<Unit>() {
 
     data class UiState(
@@ -47,6 +48,7 @@ class HomeScreenViewModel(
         val brickBreakerRemainingSeconds: Int = DailyPlaytimeStore.DEFAULT_DAILY_SECONDS,
         val sudokuRemaining: Int = DailyLimitStore.DEFAULT_DAILY_LIMIT,
         val wordSearchRemaining: Int = DailyLimitStore.DEFAULT_DAILY_LIMIT,
+        val gameVisibility: Map<String, Boolean> = emptyMap(),
     )
 
     private val _state = MutableStateFlow(UiState())
@@ -82,6 +84,12 @@ class HomeScreenViewModel(
                 brickBreakerRemainingSeconds = dailyPlaytimeStore.remainingSeconds(GameKeys.BRICK_BREAKER),
                 sudokuRemaining = dailyLimitStore.remainingPlays(GameKeys.SUDOKU),
                 wordSearchRemaining = dailyLimitStore.remainingPlays(GameKeys.WORD_SEARCH),
+                gameVisibility = listOf(
+                    GameKeys.SNAKE,
+                    GameKeys.BRICK_BREAKER,
+                    GameKeys.SUDOKU,
+                    GameKeys.WORD_SEARCH,
+                ).associateWith { gameVisibilityStore.isVisible(it) },
             )
         }
     }
@@ -99,6 +107,7 @@ class HomeScreen(sealedActivity: SealedLightActivity) :
             dailyLimitStore = DailyLimitStore(lightContext.dataStore),
             dailyPlaytimeStore = DailyPlaytimeStore(lightContext.dataStore),
             settingsStore = SettingsStore(lightContext.dataStore),
+            gameVisibilityStore = GameVisibilityStore(lightContext.dataStore),
         )
 
     @Composable
@@ -113,37 +122,45 @@ class HomeScreen(sealedActivity: SealedLightActivity) :
                     .background(LightThemeTokens.colors.background),
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    LightTopBar(center = LightTopBarCenter.Text("Games"))
+                    LightTopBar(center = LightTopBarCenter.Text("Passatempo"))
 
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 2f.gridUnitsAsDp()),
                     ) {
-                        GameMenuRow(
-                            title = "Snake",
-                            subtitle = describeRemainingTime(state.snakeRemainingSeconds),
-                            enabled = state.snakeRemainingSeconds > 0,
-                            onClick = { navigateTo(screenFactory = { activity -> SnakeScreen(activity) }) },
-                        )
-                        GameMenuRow(
-                            title = "Brick Breaker",
-                            subtitle = describeRemainingTime(state.brickBreakerRemainingSeconds),
-                            enabled = state.brickBreakerRemainingSeconds > 0,
-                            onClick = { navigateTo(screenFactory = { activity -> BrickBreakerScreen(activity) }) },
-                        )
-                        GameMenuRow(
-                            title = "Sudoku",
-                            subtitle = describeRemaining(state.sudokuRemaining),
-                            enabled = state.sudokuRemaining > 0,
-                            onClick = { navigateTo(screenFactory = { activity -> SudokuScreen(activity) }) },
-                        )
-                        GameMenuRow(
-                            title = "Word Search",
-                            subtitle = describeRemaining(state.wordSearchRemaining),
-                            enabled = state.wordSearchRemaining > 0,
-                            onClick = { navigateTo(screenFactory = { activity -> WordSearchScreen(activity) }) },
-                        )
+                        if (state.gameVisibility[GameKeys.SNAKE] != false) {
+                            GameMenuRow(
+                                title = "Snake",
+                                subtitle = describeRemainingTime(state.snakeRemainingSeconds),
+                                enabled = state.snakeRemainingSeconds > 0,
+                                onClick = { navigateTo(screenFactory = { activity -> SnakeScreen(activity) }) },
+                            )
+                        }
+                        if (state.gameVisibility[GameKeys.BRICK_BREAKER] != false) {
+                            GameMenuRow(
+                                title = "Brick Breaker",
+                                subtitle = describeRemainingTime(state.brickBreakerRemainingSeconds),
+                                enabled = state.brickBreakerRemainingSeconds > 0,
+                                onClick = { navigateTo(screenFactory = { activity -> BrickBreakerScreen(activity) }) },
+                            )
+                        }
+                        if (state.gameVisibility[GameKeys.SUDOKU] != false) {
+                            GameMenuRow(
+                                title = "Sudoku",
+                                subtitle = describeRemaining(state.sudokuRemaining),
+                                enabled = state.sudokuRemaining > 0,
+                                onClick = { navigateTo(screenFactory = { activity -> SudokuScreen(activity) }) },
+                            )
+                        }
+                        if (state.gameVisibility[GameKeys.WORD_SEARCH] != false) {
+                            GameMenuRow(
+                                title = "Word Search",
+                                subtitle = describeRemaining(state.wordSearchRemaining),
+                                enabled = state.wordSearchRemaining > 0,
+                                onClick = { navigateTo(screenFactory = { activity -> WordSearchScreen(activity) }) },
+                            )
+                        }
                     }
                 }
 
