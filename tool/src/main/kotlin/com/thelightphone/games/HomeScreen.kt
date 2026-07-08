@@ -13,8 +13,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewModelScope
 import com.thelightphone.games.brickbreaker.BrickBreakerScreen
+import com.thelightphone.games.connectfour.ConnectFourScreen
+import com.thelightphone.games.dice.DiceScreen
+import com.thelightphone.games.pong.PongScreen
 import com.thelightphone.games.snake.SnakeScreen
 import com.thelightphone.games.sudoku.SudokuScreen
+import com.thelightphone.games.tictactoe.TicTacToeScreen
 import com.thelightphone.games.wordsearch.WordSearchScreen
 import com.thelightphone.sdk.InitialScreen
 import com.thelightphone.sdk.LightScreen
@@ -23,6 +27,7 @@ import com.thelightphone.sdk.SealedLightActivity
 import com.thelightphone.sdk.SimpleLightScreen
 import com.thelightphone.sdk.ui.LightIcon
 import com.thelightphone.sdk.ui.LightIcons
+import com.thelightphone.sdk.ui.LightScrollView
 import com.thelightphone.sdk.ui.LightText
 import com.thelightphone.sdk.ui.LightTextVariant
 import com.thelightphone.sdk.ui.LightTheme
@@ -44,10 +49,14 @@ class HomeScreenViewModel(
 ) : LightViewModel<Unit>() {
 
     data class UiState(
-        val snakeRemainingSeconds: Int = DailyPlaytimeStore.DEFAULT_DAILY_SECONDS,
-        val brickBreakerRemainingSeconds: Int = DailyPlaytimeStore.DEFAULT_DAILY_SECONDS,
+        val snakeRemainingSeconds: Int = GameBudgets.SNAKE_SECONDS,
+        val brickBreakerRemainingSeconds: Int = GameBudgets.BRICK_BREAKER_SECONDS,
+        val pongRemainingSeconds: Int = GameBudgets.PONG_SECONDS,
+        val ticTacToeRemainingSeconds: Int = GameBudgets.TIC_TAC_TOE_SECONDS,
+        val connectFourRemainingSeconds: Int = GameBudgets.CONNECT_FOUR_SECONDS,
         val sudokuRemaining: Int = DailyLimitStore.DEFAULT_DAILY_LIMIT,
         val wordSearchRemaining: Int = DailyLimitStore.DEFAULT_DAILY_LIMIT,
+        val diceRemaining: Int = DAILY_DICE_THROWS,
         val gameVisibility: Map<String, Boolean> = emptyMap(),
     )
 
@@ -80,16 +89,24 @@ class HomeScreenViewModel(
     private fun refresh() {
         viewModelScope.launch {
             _state.value = UiState(
-                snakeRemainingSeconds = dailyPlaytimeStore.remainingSeconds(GameKeys.SNAKE),
-                brickBreakerRemainingSeconds = dailyPlaytimeStore.remainingSeconds(GameKeys.BRICK_BREAKER),
+                snakeRemainingSeconds = dailyPlaytimeStore.remainingSeconds(GameKeys.SNAKE, GameBudgets.SNAKE_SECONDS),
+                brickBreakerRemainingSeconds = dailyPlaytimeStore.remainingSeconds(
+                    GameKeys.BRICK_BREAKER,
+                    GameBudgets.BRICK_BREAKER_SECONDS,
+                ),
+                pongRemainingSeconds = dailyPlaytimeStore.remainingSeconds(GameKeys.PONG, GameBudgets.PONG_SECONDS),
+                ticTacToeRemainingSeconds = dailyPlaytimeStore.remainingSeconds(
+                    GameKeys.TIC_TAC_TOE,
+                    GameBudgets.TIC_TAC_TOE_SECONDS,
+                ),
+                connectFourRemainingSeconds = dailyPlaytimeStore.remainingSeconds(
+                    GameKeys.CONNECT_FOUR,
+                    GameBudgets.CONNECT_FOUR_SECONDS,
+                ),
                 sudokuRemaining = dailyLimitStore.remainingPlays(GameKeys.SUDOKU),
                 wordSearchRemaining = dailyLimitStore.remainingPlays(GameKeys.WORD_SEARCH),
-                gameVisibility = listOf(
-                    GameKeys.SNAKE,
-                    GameKeys.BRICK_BREAKER,
-                    GameKeys.SUDOKU,
-                    GameKeys.WORD_SEARCH,
-                ).associateWith { gameVisibilityStore.isVisible(it) },
+                diceRemaining = dailyLimitStore.remainingPlays(GameKeys.DICE, DAILY_DICE_THROWS),
+                gameVisibility = ALL_GAME_KEYS.associateWith { gameVisibilityStore.isVisible(it) },
             )
         }
     }
@@ -124,14 +141,19 @@ class HomeScreen(sealedActivity: SealedLightActivity) :
                 Column(modifier = Modifier.fillMaxSize()) {
                     LightTopBar(center = LightTopBarCenter.Text("Passatempo"))
 
-                    Column(
+                    LightScrollView(
                         modifier = Modifier
+                            .weight(1f)
                             .fillMaxWidth()
-                            .padding(horizontal = 2f.gridUnitsAsDp()),
+                            .padding(horizontal = 2f.gridUnitsAsDp())
+                            // Leaves room for the floating settings icon (2 gridUnits tall +
+                            // 2 gridUnits of its own padding = 4), so the scroll area - and its
+                            // scrollbar - never extends behind it.
+                            .padding(bottom = 5f.gridUnitsAsDp()),
                     ) {
                         if (state.gameVisibility[GameKeys.SNAKE] != false) {
                             GameMenuRow(
-                                title = "Snake",
+                                title = gameDisplayName(GameKeys.SNAKE),
                                 subtitle = describeRemainingTime(state.snakeRemainingSeconds),
                                 enabled = state.snakeRemainingSeconds > 0,
                                 onClick = { navigateTo(screenFactory = { activity -> SnakeScreen(activity) }) },
@@ -139,26 +161,58 @@ class HomeScreen(sealedActivity: SealedLightActivity) :
                         }
                         if (state.gameVisibility[GameKeys.BRICK_BREAKER] != false) {
                             GameMenuRow(
-                                title = "Brick Breaker",
+                                title = gameDisplayName(GameKeys.BRICK_BREAKER),
                                 subtitle = describeRemainingTime(state.brickBreakerRemainingSeconds),
                                 enabled = state.brickBreakerRemainingSeconds > 0,
                                 onClick = { navigateTo(screenFactory = { activity -> BrickBreakerScreen(activity) }) },
                             )
                         }
+                        if (state.gameVisibility[GameKeys.PONG] != false) {
+                            GameMenuRow(
+                                title = gameDisplayName(GameKeys.PONG),
+                                subtitle = describeRemainingTime(state.pongRemainingSeconds),
+                                enabled = state.pongRemainingSeconds > 0,
+                                onClick = { navigateTo(screenFactory = { activity -> PongScreen(activity) }) },
+                            )
+                        }
+                        if (state.gameVisibility[GameKeys.TIC_TAC_TOE] != false) {
+                            GameMenuRow(
+                                title = gameDisplayName(GameKeys.TIC_TAC_TOE),
+                                subtitle = describeRemainingTime(state.ticTacToeRemainingSeconds),
+                                enabled = state.ticTacToeRemainingSeconds > 0,
+                                onClick = { navigateTo(screenFactory = { activity -> TicTacToeScreen(activity) }) },
+                            )
+                        }
+                        if (state.gameVisibility[GameKeys.CONNECT_FOUR] != false) {
+                            GameMenuRow(
+                                title = gameDisplayName(GameKeys.CONNECT_FOUR),
+                                subtitle = describeRemainingTime(state.connectFourRemainingSeconds),
+                                enabled = state.connectFourRemainingSeconds > 0,
+                                onClick = { navigateTo(screenFactory = { activity -> ConnectFourScreen(activity) }) },
+                            )
+                        }
                         if (state.gameVisibility[GameKeys.SUDOKU] != false) {
                             GameMenuRow(
-                                title = "Sudoku",
-                                subtitle = describeRemaining(state.sudokuRemaining),
+                                title = gameDisplayName(GameKeys.SUDOKU),
+                                subtitle = describeRemaining(state.sudokuRemaining, "puzzle"),
                                 enabled = state.sudokuRemaining > 0,
                                 onClick = { navigateTo(screenFactory = { activity -> SudokuScreen(activity) }) },
                             )
                         }
                         if (state.gameVisibility[GameKeys.WORD_SEARCH] != false) {
                             GameMenuRow(
-                                title = "Word Search",
-                                subtitle = describeRemaining(state.wordSearchRemaining),
+                                title = gameDisplayName(GameKeys.WORD_SEARCH),
+                                subtitle = describeRemaining(state.wordSearchRemaining, "puzzle"),
                                 enabled = state.wordSearchRemaining > 0,
                                 onClick = { navigateTo(screenFactory = { activity -> WordSearchScreen(activity) }) },
+                            )
+                        }
+                        if (state.gameVisibility[GameKeys.DICE] != false) {
+                            GameMenuRow(
+                                title = gameDisplayName(GameKeys.DICE),
+                                subtitle = describeRemaining(state.diceRemaining, "throw"),
+                                enabled = state.diceRemaining > 0,
+                                onClick = { navigateTo(screenFactory = { activity -> DiceScreen(activity) }) },
                             )
                         }
                     }
@@ -178,10 +232,10 @@ class HomeScreen(sealedActivity: SealedLightActivity) :
     }
 }
 
-private fun describeRemaining(remaining: Int): String = when (remaining) {
-    0 -> "No puzzles left today - come back tomorrow"
-    1 -> "1 puzzle left today"
-    else -> "$remaining puzzles left today"
+private fun describeRemaining(remaining: Int, noun: String): String = when (remaining) {
+    0 -> "No ${noun}s left today - come back tomorrow"
+    1 -> "1 $noun left today"
+    else -> "$remaining ${noun}s left today"
 }
 
 private fun describeRemainingTime(remainingSeconds: Int): String {

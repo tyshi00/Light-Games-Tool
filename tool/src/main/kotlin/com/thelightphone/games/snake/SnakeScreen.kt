@@ -19,6 +19,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.viewModelScope
 import com.thelightphone.games.DailyPlaytimeStore
+import com.thelightphone.games.GameBudgets
 import com.thelightphone.games.GameKeys
 import com.thelightphone.sdk.LightScreen
 import com.thelightphone.sdk.LightViewModel
@@ -81,7 +82,7 @@ class SnakeScreenViewModel(
         if (!hasStarted) {
             hasStarted = true
             viewModelScope.launch {
-                val remaining = dailyPlaytimeStore.remainingSeconds(GameKeys.SNAKE)
+                val remaining = dailyPlaytimeStore.remainingSeconds(GameKeys.SNAKE, GameBudgets.SNAKE_SECONDS)
                 if (remaining <= 0) {
                     _state.value = SnakeUiState.TimeUp
                 } else {
@@ -134,7 +135,7 @@ class SnakeScreenViewModel(
             var remaining = startRemaining
             while (isActive && remaining > 0) {
                 delay(BUDGET_TICK_MS)
-                remaining = dailyPlaytimeStore.addUsage(GameKeys.SNAKE, elapsedSeconds = 1)
+                remaining = dailyPlaytimeStore.addUsage(GameKeys.SNAKE, elapsedSeconds = 1, dailyBudgetSeconds = GameBudgets.SNAKE_SECONDS)
                 val current = _state.value as? SnakeUiState.Playing ?: continue
                 _state.value = current.copy(remainingSeconds = remaining)
             }
@@ -219,7 +220,7 @@ private fun LoadingMessage() {
 
 @Composable
 private fun TimeUpMessage() {
-    val minutes = DailyPlaytimeStore.DEFAULT_DAILY_SECONDS / 60
+    val minutes = GameBudgets.SNAKE_SECONDS / 60
     Box(
         modifier = Modifier.fillMaxSize().padding(2f.gridUnitsAsDp()),
         contentAlignment = Alignment.Center,

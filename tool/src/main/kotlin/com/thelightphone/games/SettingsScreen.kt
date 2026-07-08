@@ -19,6 +19,7 @@ import com.thelightphone.sdk.SimpleLightScreen
 import com.thelightphone.sdk.ui.LightBarButton
 import com.thelightphone.sdk.ui.LightIcon
 import com.thelightphone.sdk.ui.LightIcons
+import com.thelightphone.sdk.ui.LightScrollView
 import com.thelightphone.sdk.ui.LightText
 import com.thelightphone.sdk.ui.LightTextVariant
 import com.thelightphone.sdk.ui.LightTheme
@@ -32,13 +33,6 @@ import com.thelightphone.sdk.ui.lightClickable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-
-private val ALL_GAME_KEYS = listOf(
-    GameKeys.SNAKE,
-    GameKeys.BRICK_BREAKER,
-    GameKeys.SUDOKU,
-    GameKeys.WORD_SEARCH,
-)
 
 class SettingsScreenViewModel(
     private val settingsStore: SettingsStore,
@@ -100,42 +94,38 @@ class SettingsScreen(sealedActivity: SealedLightActivity) :
                     center = LightTopBarCenter.Text("Settings"),
                 )
 
-                SettingsRow(
-                    title = "Invert Colors",
-                    isOn = isInverted,
-                    onClick = { viewModel.toggleInvertColors() },
-                )
+                LightScrollView(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        // Small margin so the scroll area (and its scrollbar) doesn't run
+                        // flush to the very bottom edge of the screen.
+                        .padding(bottom = 2f.gridUnitsAsDp()),
+                ) {
+                    SettingsRow(
+                        title = "Invert Colors",
+                        isOn = isInverted,
+                        onClick = { viewModel.toggleInvertColors() },
+                    )
 
-                LightText(
-                    text = "Show on home screen",
-                    variant = LightTextVariant.Detail,
-                    lighten = true,
-                    modifier = Modifier.padding(
-                        horizontal = 2f.gridUnitsAsDp(),
-                        vertical = 0.75f.gridUnitsAsDp(),
-                    ),
-                )
+                    LightText(
+                        text = "Show on home screen",
+                        variant = LightTextVariant.Detail,
+                        lighten = true,
+                        modifier = Modifier.padding(
+                            horizontal = 2f.gridUnitsAsDp(),
+                            vertical = 0.75f.gridUnitsAsDp(),
+                        ),
+                    )
 
-                SettingsRow(
-                    title = "Snake",
-                    isOn = gameVisibility[GameKeys.SNAKE] ?: true,
-                    onClick = { viewModel.toggleGameVisibility(GameKeys.SNAKE) },
-                )
-                SettingsRow(
-                    title = "Brick Breaker",
-                    isOn = gameVisibility[GameKeys.BRICK_BREAKER] ?: true,
-                    onClick = { viewModel.toggleGameVisibility(GameKeys.BRICK_BREAKER) },
-                )
-                SettingsRow(
-                    title = "Sudoku",
-                    isOn = gameVisibility[GameKeys.SUDOKU] ?: true,
-                    onClick = { viewModel.toggleGameVisibility(GameKeys.SUDOKU) },
-                )
-                SettingsRow(
-                    title = "Word Search",
-                    isOn = gameVisibility[GameKeys.WORD_SEARCH] ?: true,
-                    onClick = { viewModel.toggleGameVisibility(GameKeys.WORD_SEARCH) },
-                )
+                    ALL_GAME_KEYS.forEach { gameKey ->
+                        SettingsRow(
+                            title = gameDisplayName(gameKey),
+                            isOn = gameVisibility[gameKey] ?: true,
+                            onClick = { viewModel.toggleGameVisibility(gameKey) },
+                        )
+                    }
+                }
             }
         }
     }

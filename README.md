@@ -1,6 +1,6 @@
 # Passatempo (Light Phone III)
 
-A small games tool for LightOS, built with the Light SDK. Four games: Snake, Brick Breaker, Sudoku, and Word Search. Formerly called "Games" - renamed to Passatempo (Portuguese/Italian for "pastime").
+A small games tool for LightOS, built with the Light SDK. Eight things to do: Snake, Brick Breaker, Pong, Tic-Tac-Toe, Connect Four, Sudoku, Word Search, and Dice. Formerly called "Games" - renamed to Passatempo (Portuguese/Italian for "pastime").
 
 <p align="center">
   <img src="screenshots/home.png" width="180" alt="">
@@ -12,11 +12,15 @@ A small games tool for LightOS, built with the Light SDK. Four games: Snake, Bri
 
 ## What's in it
 
-- **Snake** - swipe to steer. No per-attempt limit, but capped at 20 minutes of playtime per day.
-- **Brick Breaker** - tap the left or right half of the screen to nudge the paddle; each tap moves it a fixed distance rather than gliding, for precise control. Shares Snake's 20-minute daily time budget rather than a per-attempt limit, same reasoning: quick rounds, unlimited retries within the budget.
+- **Snake** - swipe to steer. No per-attempt limit, but capped at 15 minutes of playtime per day.
+- **Brick Breaker** - tap the left or right half of the screen to nudge the paddle; each tap moves it a fixed distance rather than gliding, for precise control. Shares the same 15-minute daily time budget as Snake, same reasoning: quick rounds, unlimited retries within the budget.
+- **Pong** - solo against a simple AI paddle (deliberately imperfect, so it's beatable). Same tap-nudge control as Brick Breaker, same 15-minute budget. No fixed win condition - score keeps climbing on both sides until time runs out.
+- **Tic-Tac-Toe** - local pass-the-phone, two players. 20-minute daily time budget (bumped up from the original 10 since two people share the clock).
+- **Connect Four** - same pass-the-phone setup as Tic-Tac-Toe, White vs. Black. 20-minute daily budget.
 - **Sudoku** - 3 puzzles a day. If you back out mid-puzzle, it resumes right where you left off instead of starting over or costing you another attempt.
-- **Word Search** - same daily limit and resume behavior as Sudoku.
-- **Settings** - invert colors (dark/light), and a show/hide toggle for each game on the home screen.
+- **Word Search** - same daily limit and resume behavior as Sudoku. 1000 words across 19 categories (animals, food, world geography, global holidays, notable people of color, sports, music, space, mythology, and more), 8 words per puzzle shown in a 4-column layout, with a no-immediate-repeat mechanism so the same words don't keep resurfacing.
+- **Dice** - tap to roll, animated. 10 throws a day.
+- **Settings** - invert colors (dark/light), and a show/hide toggle for every game above on the home screen.
 
 All progress and daily limits are stored locally on-device. Nothing leaves the phone.
 
@@ -51,7 +55,7 @@ This repo patches a few things in the local `sdk`/`plugin` copies, on top of the
 
 - **Custom app icon is wired up.** The stock SDK's manifest generator doesn't reference a launcher icon at all by default; this repo's local `plugin` copy was patched to add `android:icon`/`android:roundIcon`. The icon itself is an original, simplified game-controller silhouette with a clock face standing in for the action buttons (nodding to "pastime"), living in `tool/src/main/res/`.
 - **Splash screen shows only as long as needed.** The SDK's default `LightActivity` enforces a hard ~1 second minimum splash duration; that check was removed from this repo's local `sdk:client` copy, so the splash now shows for exactly as long as it takes content to be ready, nothing more. The splash itself is just a plain black screen with no icon.
-- **The SDK's keyboard component was removed.** Light's `sdk:ui` module normally depends on a private `com.thelightphone.lp3keyboard:ui` package (hosted on GitHub Packages, requiring authenticated access) for its in-app text-input keyboard (`LightTextInputEditor`, `LightEmbeddedLp3Keyboard`, `LightKeyboardManager`). None of Games' screens use text input at all, so those files were deleted from this repo's local `sdk` copy and the dependency removed entirely - this means the project builds without needing any GitHub Packages credentials. Two of Light's own example apps (`examples/ui-demo`, `examples/weather`) still reference the removed keyboard editor and would fail to compile if built individually, but they're unrelated to the Games tool and aren't part of any build or CI step here.
+- **The SDK's keyboard component was removed.** Light's `sdk:ui` module normally depends on a private `com.thelightphone.lp3keyboard:ui` package (hosted on GitHub Packages, requiring authenticated access) for its in-app text-input keyboard (`LightTextInputEditor`, `LightEmbeddedLp3Keyboard`, `LightKeyboardManager`). None of Passatempo's screens use text input at all, so those files were deleted from this repo's local `sdk` copy and the dependency removed entirely - this means the project builds without needing any GitHub Packages credentials. Two of Light's own example apps (`examples/ui-demo`, `examples/weather`) still reference the removed keyboard editor and would fail to compile if built individually, but they're unrelated to Passatempo and aren't part of any build or CI step here.
 
 ## Releasing a new version
 

@@ -1,4 +1,4 @@
-package com.thelightphone.games.brickbreaker
+package com.thelightphone.games.pong
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -35,7 +35,6 @@ import com.thelightphone.sdk.ui.LightThemeTokens
 import com.thelightphone.sdk.ui.LightTopBar
 import com.thelightphone.sdk.ui.LightTopBarCenter
 import com.thelightphone.sdk.ui.gridUnitsAsDp
-import com.thelightphone.sdk.ui.lightClickable
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,44 +45,43 @@ import kotlinx.coroutines.launch
 private const val TICK_MS = 30L
 private const val BUDGET_TICK_MS = 1000L
 
-sealed class BrickBreakerUiState {
-    object CheckingBudget : BrickBreakerUiState()
-    object TimeUp : BrickBreakerUiState()
+sealed class PongUiState {
+    object CheckingBudget : PongUiState()
+    object TimeUp : PongUiState()
 
     data class Playing(
-        val paddleX: Float,
+        val playerPaddleX: Float,
+        val aiPaddleX: Float,
         val ballX: Float,
         val ballY: Float,
-        val bricks: List<Pair<Brick, Rect>>,
         val fieldWidth: Float,
         val fieldHeight: Float,
-        val score: Int,
-        val isGameOver: Boolean,
-        val isWon: Boolean,
+        val playerScore: Int,
+        val aiScore: Int,
         val remainingSeconds: Int,
-    ) : BrickBreakerUiState()
+    ) : PongUiState()
 }
 
-class BrickBreakerScreenViewModel(
+class PongScreenViewModel(
     private val dailyPlaytimeStore: DailyPlaytimeStore,
 ) : LightViewModel<Unit>() {
 
-    private val game = BrickBreakerGame()
+    private val game = PongGame()
     private var loopJob: Job? = null
     private var budgetJob: Job? = null
     private var hasStarted = false
 
-    private val _state = MutableStateFlow<BrickBreakerUiState>(BrickBreakerUiState.CheckingBudget)
-    val state: StateFlow<BrickBreakerUiState> = _state
+    private val _state = MutableStateFlow<PongUiState>(PongUiState.CheckingBudget)
+    val state: StateFlow<PongUiState> = _state
 
     override fun onScreenShow(screen: SimpleLightScreen<Unit>) {
         super.onScreenShow(screen)
         if (!hasStarted) {
             hasStarted = true
             viewModelScope.launch {
-                val remaining = dailyPlaytimeStore.remainingSeconds(GameKeys.BRICK_BREAKER, GameBudgets.BRICK_BREAKER_SECONDS)
+                val remaining = dailyPlaytimeStore.remainingSeconds(GameKeys.PONG, GameBudgets.PONG_SECONDS)
                 if (remaining <= 0) {
-                    _state.value = BrickBreakerUiState.TimeUp
+                    _state.value = PongUiState.TimeUp
                 } else {
                     _state.value = snapshot(remaining)
                     startLoop()
@@ -92,7 +90,7 @@ class BrickBreakerScreenViewModel(
             }
         } else {
             val current = _state.value
-            if (current is BrickBreakerUiState.Playing) {
+            if (current is PongUiState.Playing) {
                 startLoop()
                 startBudgetTicker(current.remainingSeconds)
             }
@@ -115,8 +113,8 @@ class BrickBreakerScreenViewModel(
         loopJob?.cancel()
         loopJob = viewModelScope.launch {
             while (isActive) {
-                val current = _state.value as? BrickBreakerUiState.Playing
-                if (current != null && !game.isGameOver && !game.isWon) {
+                val current = _state.value as? PongUiState.Playing
+                if (current != null) {
                     game.tick()
                     _state.value = snapshot(current.remainingSeconds)
                 }
@@ -131,49 +129,46 @@ class BrickBreakerScreenViewModel(
             var remaining = startRemaining
             while (isActive && remaining > 0) {
                 delay(BUDGET_TICK_MS)
-                remaining = dailyPlaytimeStore.addUsage(GameKeys.BRICK_BREAKER, elapsedSeconds = 1, dailyBudgetSeconds = GameBudgets.BRICK_BREAKER_SECONDS)
-                val current = _state.value as? BrickBreakerUiState.Playing ?: continue
+                remaining = dailyPlaytimeStore.addUsage(
+                    GameKeys.PONG,
+                    elapsedSeconds = 1,
+                    dailyBudgetSeconds = GameBudgets.PONG_SECONDS,
+                )
+                val current = _state.value as? PongUiState.Playing ?: continue
                 _state.value = current.copy(remainingSeconds = remaining)
             }
             if (remaining <= 0) {
                 loopJob?.cancel()
-                _state.value = BrickBreakerUiState.TimeUp
+                _state.value = PongUiState.TimeUp
             }
         }
     }
 
-    fun nudgePaddle(direction: PaddleDirection) {
-        game.nudgePaddle(direction)
+    fun nudgePaddle(direction: PongPaddleDirection) {
+        game.nudgePlayerPaddle(direction)
     }
 
-    fun restart() {
-        val current = _state.value as? BrickBreakerUiState.Playing ?: return
-        game.reset()
-        _state.value = snapshot(current.remainingSeconds)
-    }
-
-    private fun snapshot(remainingSeconds: Int) = BrickBreakerUiState.Playing(
-        paddleX = game.paddleX,
+    private fun snapshot(remainingSeconds: Int) = PongUiState.Playing(
+        playerPaddleX = game.playerPaddleX,
+        aiPaddleX = game.aiPaddleX,
         ballX = game.ballX,
         ballY = game.ballY,
-        bricks = game.standingBrickRects(),
         fieldWidth = game.width,
         fieldHeight = game.height,
-        score = game.score,
-        isGameOver = game.isGameOver,
-        isWon = game.isWon,
+        playerScore = game.playerScore,
+        aiScore = game.aiScore,
         remainingSeconds = remainingSeconds,
     )
 }
 
-class BrickBreakerScreen(sealedActivity: SealedLightActivity) :
-    LightScreen<Unit, BrickBreakerScreenViewModel>(sealedActivity) {
+class PongScreen(sealedActivity: SealedLightActivity) :
+    LightScreen<Unit, PongScreenViewModel>(sealedActivity) {
 
-    override val viewModelClass: Class<BrickBreakerScreenViewModel>
-        get() = BrickBreakerScreenViewModel::class.java
+    override val viewModelClass: Class<PongScreenViewModel>
+        get() = PongScreenViewModel::class.java
 
-    override fun createViewModel(): BrickBreakerScreenViewModel =
-        BrickBreakerScreenViewModel(DailyPlaytimeStore(lightContext.dataStore))
+    override fun createViewModel(): PongScreenViewModel =
+        PongScreenViewModel(DailyPlaytimeStore(lightContext.dataStore))
 
     @Composable
     override fun Content() {
@@ -187,19 +182,19 @@ class BrickBreakerScreen(sealedActivity: SealedLightActivity) :
                     .background(LightThemeTokens.colors.background),
             ) {
                 val rightLabel = when (val s = state) {
-                    is BrickBreakerUiState.Playing -> "${s.score}  ${formatClock(s.remainingSeconds)}"
+                    is PongUiState.Playing -> formatClock(s.remainingSeconds)
                     else -> ""
                 }
                 LightTopBar(
                     leftButton = LightBarButton.LightIcon(icon = LightIcons.BACK, onClick = { goBack() }),
-                    center = LightTopBarCenter.Text("Brick Breaker"),
+                    center = LightTopBarCenter.Text("Pong"),
                     rightButton = LightBarButton.Text(text = rightLabel, onClick = null),
                 )
 
                 when (val s = state) {
-                    is BrickBreakerUiState.CheckingBudget -> LoadingMessage()
-                    is BrickBreakerUiState.TimeUp -> TimeUpMessage()
-                    is BrickBreakerUiState.Playing -> PlayingContent(s, viewModel)
+                    is PongUiState.CheckingBudget -> LoadingMessage()
+                    is PongUiState.TimeUp -> TimeUpMessage()
+                    is PongUiState.Playing -> PlayingContent(s, viewModel)
                 }
             }
         }
@@ -215,14 +210,14 @@ private fun LoadingMessage() {
 
 @Composable
 private fun TimeUpMessage() {
-    val minutes = GameBudgets.BRICK_BREAKER_SECONDS / 60
+    val minutes = GameBudgets.PONG_SECONDS / 60
     Box(
         modifier = Modifier.fillMaxSize().padding(2f.gridUnitsAsDp()),
         contentAlignment = Alignment.Center,
     ) {
         Column {
             LightText(
-                text = "That's $minutes minutes of Brick Breaker for today!",
+                text = "That's $minutes minutes of Pong for today!",
                 variant = LightTextVariant.Heading,
                 align = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
@@ -232,58 +227,67 @@ private fun TimeUpMessage() {
                 variant = LightTextVariant.Detail,
                 lighten = true,
                 align = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 0.5f.gridUnitsAsDp()),
+                modifier = Modifier.fillMaxWidth().padding(top = 0.5f.gridUnitsAsDp()),
             )
         }
     }
 }
 
 @Composable
-private fun PlayingContent(state: BrickBreakerUiState.Playing, viewModel: BrickBreakerScreenViewModel) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(1f.gridUnitsAsDp())
-            .pointerInput(Unit) {
-                detectTapGestures { offset ->
-                    val direction = if (offset.x < size.width / 2f) PaddleDirection.LEFT else PaddleDirection.RIGHT
-                    viewModel.nudgePaddle(direction)
-                }
-            },
-    ) {
-        BrickBreakerBoard(state = state)
+private fun PlayingContent(state: PongUiState.Playing, viewModel: PongScreenViewModel) {
+    Column(modifier = Modifier.fillMaxSize().padding(horizontal = 1f.gridUnitsAsDp())) {
+        LightText(
+            text = "${state.playerScore}-${state.aiScore}",
+            variant = LightTextVariant.Detail,
+            lighten = true,
+            modifier = Modifier.padding(vertical = 0.5f.gridUnitsAsDp()),
+        )
 
-        if (state.isGameOver || state.isWon) {
-            GameEndOverlay(won = state.isWon, score = state.score, onRestart = { viewModel.restart() })
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxSize()
+                .pointerInput(Unit) {
+                    detectTapGestures { offset ->
+                        val direction = if (offset.x < size.width / 2f) PongPaddleDirection.LEFT else PongPaddleDirection.RIGHT
+                        viewModel.nudgePaddle(direction)
+                    }
+                },
+        ) {
+            PongBoard(state = state)
         }
     }
 }
 
 @Composable
-private fun BrickBreakerBoard(state: BrickBreakerUiState.Playing) {
+private fun PongBoard(state: PongUiState.Playing) {
     val colors = LightThemeTokens.colors
     Canvas(modifier = Modifier.fillMaxSize()) {
         val scaleX = size.width / state.fieldWidth
         val scaleY = size.height / state.fieldHeight
-
-        // Bricks
-        state.bricks.forEach { (_, rect) ->
-            drawRect(
-                color = colors.content,
-                topLeft = Offset(rect.left * scaleX, rect.top * scaleY),
-                size = Size((rect.right - rect.left) * scaleX, (rect.bottom - rect.top) * scaleY),
-            )
-        }
-
-        // Paddle
-        val paddleHeightUnits = 8f
         val paddleWidthUnits = 40f
-        val paddleYUnits = state.fieldHeight - 20f
+        val paddleHeightUnits = 8f
+
+        // Center line, purely decorative
+        drawLine(
+            color = colors.contentSecondary,
+            start = Offset(0f, size.height / 2f),
+            end = Offset(size.width, size.height / 2f),
+            strokeWidth = 1f,
+        )
+
+        // AI paddle (top)
         drawRect(
             color = colors.content,
-            topLeft = Offset(state.paddleX * scaleX, paddleYUnits * scaleY),
+            topLeft = Offset(state.aiPaddleX * scaleX, 12f * scaleY),
+            size = Size(paddleWidthUnits * scaleX, paddleHeightUnits * scaleY),
+        )
+
+        // Player paddle (bottom)
+        val playerPaddleYUnits = state.fieldHeight - 20f
+        drawRect(
+            color = colors.content,
+            topLeft = Offset(state.playerPaddleX * scaleX, playerPaddleYUnits * scaleY),
             size = Size(paddleWidthUnits * scaleX, paddleHeightUnits * scaleY),
         )
 
@@ -293,44 +297,6 @@ private fun BrickBreakerBoard(state: BrickBreakerUiState.Playing) {
             radius = 5f * scaleX,
             center = Offset(state.ballX * scaleX, state.ballY * scaleY),
         )
-    }
-}
-
-@Composable
-private fun GameEndOverlay(won: Boolean, score: Int, onRestart: () -> Unit) {
-    val colors = LightThemeTokens.colors
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colors.background.copy(alpha = 0.92f))
-            .lightClickable(onClick = onRestart),
-        contentAlignment = Alignment.Center,
-    ) {
-        Column {
-            LightText(
-                text = if (won) "All bricks cleared!" else "Game Over",
-                variant = LightTextVariant.Heading,
-                align = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            LightText(
-                text = "Score: $score",
-                variant = LightTextVariant.Copy,
-                align = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 0.5f.gridUnitsAsDp()),
-            )
-            LightText(
-                text = "Tap to play again",
-                variant = LightTextVariant.Detail,
-                lighten = true,
-                align = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 1f.gridUnitsAsDp()),
-            )
-        }
     }
 }
 

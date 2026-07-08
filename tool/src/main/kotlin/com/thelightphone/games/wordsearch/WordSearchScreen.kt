@@ -69,6 +69,7 @@ sealed class WordSearchUiState {
 class WordSearchScreenViewModel(
     private val dailyLimitStore: DailyLimitStore,
     private val activePuzzleStore: ActivePuzzleStore,
+    private val historyStore: WordSearchHistoryStore,
 ) : LightViewModel<Unit>() {
 
     private val _state = MutableStateFlow<WordSearchUiState>(WordSearchUiState.CheckingLimit)
@@ -109,7 +110,11 @@ class WordSearchScreenViewModel(
                 return@launch
             }
             val remaining = dailyLimitStore.remainingPlays(GameKeys.WORD_SEARCH)
-            val puzzle = withContext(Dispatchers.Default) { WordSearchGenerator.generate() }
+            val puzzle = withContext(Dispatchers.Default) {
+                val recentWords = historyStore.getRecentWords()
+                WordSearchGenerator.generate(excludeWords = recentWords)
+            }
+            historyStore.recordUsedWords(puzzle.words.map { it.word })
             val newState = WordSearchUiState.Playing(
                 puzzle = puzzle,
                 foundWords = emptySet(),
@@ -203,6 +208,7 @@ class WordSearchScreen(sealedActivity: SealedLightActivity) :
         WordSearchScreenViewModel(
             dailyLimitStore = DailyLimitStore(lightContext.dataStore),
             activePuzzleStore = ActivePuzzleStore(lightContext.dataStore),
+            historyStore = WordSearchHistoryStore(lightContext.dataStore),
         )
 
     @Composable
@@ -305,7 +311,7 @@ private fun PlayingContent(state: WordSearchUiState.Playing, viewModel: WordSear
     }
 }
 
-private const val WORD_LIST_COLUMNS = 3
+private const val WORD_LIST_COLUMNS = 4
 
 @Composable
 private fun WordList(words: List<String>, foundWords: Set<String>, modifier: Modifier = Modifier) {
