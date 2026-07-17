@@ -252,11 +252,24 @@ private fun PlayingContent(state: SnakeUiState.Playing, viewModel: SnakeScreenVi
             .fillMaxSize()
             .padding(1f.gridUnitsAsDp())
             .pointerInput(Unit) {
+                var totalDx = 0f
+                var totalDy = 0f
+                var hasSwiped = false
                 detectDragGestures(
+                    onDragStart = {
+                        totalDx = 0f
+                        totalDy = 0f
+                        hasSwiped = false
+                    },
                     onDrag = { change, dragAmount ->
                         change.consume()
-                        if (abs(dragAmount.x) > SWIPE_THRESHOLD_PX || abs(dragAmount.y) > SWIPE_THRESHOLD_PX) {
-                            viewModel.onSwipe(dragAmount.x, dragAmount.y)
+                        if (!hasSwiped) {
+                            totalDx += dragAmount.x
+                            totalDy += dragAmount.y
+                            if (abs(totalDx) > SWIPE_THRESHOLD_PX || abs(totalDy) > SWIPE_THRESHOLD_PX) {
+                                hasSwiped = true
+                                viewModel.onSwipe(totalDx, totalDy)
+                            }
                         }
                     },
                 )

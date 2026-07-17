@@ -1,8 +1,8 @@
 [tool]
 id          = "com.tyshi00.games"
 label       = "Passatempo"
-versionCode = 10
-versionName = "0.9.0"
+versionCode = 11
+versionName = "0.9.1"
 permissions = []                              # everything runs fully on-device, no permissions needed
 # change if you run this on an LP3!
 # serverPackage = "com.lightos"
